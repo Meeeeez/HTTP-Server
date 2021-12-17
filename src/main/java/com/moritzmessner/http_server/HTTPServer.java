@@ -1,56 +1,34 @@
 package com.moritzmessner.http_server;
 
+import com.diogonunes.jcolor.Attribute;
+
 import com.moritzmessner.http_server.config.Configuration;
 import com.moritzmessner.http_server.config.ConfigurationManager;
-import org.apache.commons.io.IOUtils;
+import com.moritzmessner.http_server.core.ServerListener;
 
-import java.io.*;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.io.IOException;
+
+import static com.diogonunes.jcolor.Ansi.colorize;
 
 public class HTTPServer {
 
+    private final static Logger LOGGER = LoggerFactory.getLogger(HTTPServer.class);
+
     public static void main(String[] args) {
 
-        System.out.println("Server starting...");
+        LOGGER.info(colorize("Server starting...", Attribute.BRIGHT_YELLOW_TEXT(), Attribute.BLUE_BACK(), Attribute.BOLD()));
         ConfigurationManager.getInstance().loadConfigFile("src/main/resources/config.json");
         Configuration conf = ConfigurationManager.getInstance().getCurrentConfig();
 
-        System.out.print("Port: " + conf.getPort() + "\nWeb Root: " + conf.getWebroot() + "\n");
-
+        LOGGER.info(colorize("Port: " + conf.getPort(), Attribute.BRIGHT_YELLOW_TEXT(), Attribute.BLUE_BACK(), Attribute.BOLD()));
+        LOGGER.info(colorize("Web Root: " + conf.getWebroot(), Attribute.BRIGHT_YELLOW_TEXT(), Attribute.BLUE_BACK(), Attribute.BOLD()));
         try {
-            ServerSocket serverSocket = new ServerSocket(conf.getPort());
-            Socket socket = serverSocket.accept();
-
-            InputStream inputStream = socket.getInputStream();
-            OutputStream outputStream = socket.getOutputStream();
-
-            String HTMLFileContent;
-            try (FileInputStream fileInputStream = new FileInputStream("src/main/resources/html/index.html")) {
-                HTMLFileContent = new String(fileInputStream.readAllBytes(), StandardCharsets.UTF_8);
-            }
-
-            String CRLF = "\n\r"; //carriage return, line feed
-
-            final String HTTPResponse =
-                    "HTTP/1.1 200 OK" +                                                     //HTTP version + status code
-                            CRLF +
-                            "Content-Lenght: " + HTMLFileContent.getBytes().length + CRLF + //header
-                            CRLF +
-                            HTMLFileContent +                                               //content
-                            CRLF + CRLF;
-
-            outputStream.write(HTTPResponse.getBytes());
-
-            inputStream.close();
-            outputStream.close();
-            serverSocket.close();
-            socket.close();
-
+            ServerListener serverListener = new ServerListener(conf.getPort(), conf.getWebroot());
+            serverListener.start();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 }
