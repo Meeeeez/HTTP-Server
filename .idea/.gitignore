@@ -1,0 +1,6 @@
+# Default ignored files
+/workspace.xml
+../.idea
+../target
+../2021-12-17_HTTP-Server.iml
+src/test
